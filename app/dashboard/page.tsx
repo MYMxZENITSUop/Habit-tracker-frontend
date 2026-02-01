@@ -135,89 +135,98 @@ export default function DashboardPage() {
   return (
   <div className={`min-h-screen p-6 ${theme.bg} ${theme.text}`}>
     {/* TOP BAR */}
-    <div className="relative flex items-center justify-between mb-6">
-      <h1 className={`text-3xl font-bold ${theme.primary}`}>Habit Tracker</h1>
+<div className="mb-6">
+  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <h1
+      className={`text-2xl sm:text-3xl font-bold ${theme.primary}`}
+    >
+      Habit Tracker
+    </h1>
 
-      <div className="absolute left-1/2 -translate-x-1/2">
-        <div className="relative">
-          <button
-            onClick={() => setThemeOpen((v) => !v)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full border ${theme.secondary} ${theme.text}`}
-          >
-            <Palette size={16} />
-            Themes
-          </button>
+    <div className="relative sm:absolute sm:left-1/2 sm:-translate-x-1/2">
+      <button
+        onClick={() => setThemeOpen((v) => !v)}
+        className={`flex items-center gap-2 px-4 py-2 rounded-full border ${theme.secondary} ${theme.text}`}
+      >
+        <Palette size={16} />
+        Themes
+      </button>
 
-          {themeOpen && (
-            <div
-              className={`absolute top-full mt-2 w-56 rounded-lg border shadow-lg z-50 ${theme.card} ${theme.text}`}
+      {themeOpen && (
+        <div
+          className={`absolute top-full mt-2 w-56 rounded-lg border shadow-lg z-50 ${theme.card} ${theme.text}`}
+        >
+          {THEMES.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => {
+                setThemeId(t.id);
+                setThemeOpen(false);
+              }}
+              className={`w-full text-left px-4 py-2 hover:${theme.secondary}`}
             >
-              {THEMES.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => {
-                    setThemeId(t.id);
-                    setThemeOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-2 hover:${theme.secondary}`}
-                >
-                  {t.name}
-                </button>
-              ))}
-            </div>
-          )}
+              {t.name}
+            </button>
+          ))}
         </div>
-      </div>
+      )}
     </div>
+  </div>
+</div>
 
     <Card className={`${theme.card} border border-black/20`}>
       <CardContent className={`p-6 space-y-8 ${theme.text}`}>
         {/* HEADER */}
-        <div className="flex justify-between items-center border-b pb-4">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3">
-              <button onClick={prevMonth} className="h-9 w-9 rounded-full border">
-                ‹
-              </button>
+<div className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+    {/* Month */}
+    <div className="flex items-center gap-3">
+      <button onClick={prevMonth} className="h-9 w-9 rounded-full border">
+        ‹
+      </button>
 
-              <div>
-                <p className={`text-xs uppercase ${theme.mutedText}`}>Month</p>
-                <p className="font-semibold">{monthName}</p>
-              </div>
+      <div>
+        <p className={`text-xs uppercase ${theme.mutedText}`}>Month</p>
+        <p className="font-semibold">{monthName}</p>
+      </div>
 
-              <button
-                onClick={nextMonth}
-                disabled={isCurrentMonth}
-                className="h-9 w-9 rounded-full border disabled:opacity-40"
-              >
-                ›
-              </button>
-            </div>
+      <button
+        onClick={nextMonth}
+        disabled={isCurrentMonth}
+        className="h-9 w-9 rounded-full border disabled:opacity-40"
+      >
+        ›
+      </button>
+    </div>
 
-            <div>
-              <p className={`text-xs uppercase ${theme.mutedText}`}>Name</p>
-              {editingName ? (
-                <input
-                  autoFocus
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  onBlur={() => setEditingName(false)}
-                  onKeyDown={(e) => e.key === "Enter" && setEditingName(false)}
-                  className="bg-transparent border-b outline-none"
-                />
-              ) : (
-                <p className="font-semibold flex items-center gap-2">
-                  {userName}
-                  <Pencil size={14} onClick={() => setEditingName(true)} />
-                </p>
-              )}
-            </div>
-          </div>
+    {/* Name */}
+    <div>
+      <p className={`text-xs uppercase ${theme.mutedText}`}>Name</p>
+      {editingName ? (
+        <input
+          autoFocus
+          value={userName}
+          onChange={(e) => setUserName(e.target.value)}
+          onBlur={() => setEditingName(false)}
+          onKeyDown={(e) => e.key === "Enter" && setEditingName(false)}
+          className="bg-transparent border-b outline-none"
+        />
+      ) : (
+        <p className="font-semibold flex items-center gap-2">
+          {userName}
+          <Pencil size={14} onClick={() => setEditingName(true)} />
+        </p>
+      )}
+    </div>
+  </div>
 
-          <p className={`text-sm uppercase ${theme.mutedText}`}>
-            Small habits. Big change.
-          </p>
-        </div>
+  {/* Quote */}
+  <p
+    className={`text-xs sm:text-sm uppercase ${theme.mutedText} sm:text-right`}
+  >
+    Small habits. Big change.
+  </p>
+</div>
 
         {/* HABITS */}
         <div>
