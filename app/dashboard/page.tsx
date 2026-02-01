@@ -233,53 +233,58 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
+            
+            <div className="overflow-x-auto pb-4">
+  <div className="min-w-[1200px]">
+    {habits.map((habit) => (
+      <div
+        key={habit}
+        className="grid grid-cols-[160px_repeat(31,32px)] gap-2 mb-2"
+      >
+        <div className="flex items-center gap-2">
+          {editingHabit === habit ? (
+            <input
+              autoFocus
+              defaultValue={habit}
+              onBlur={(e) =>
+                renameHabit(habit, e.target.value)
+              }
+              onKeyDown={(e) =>
+                e.key === "Enter" &&
+                renameHabit(
+                  habit,
+                  (e.target as HTMLInputElement).value
+                )
+              }
+              className="bg-transparent border-b outline-none w-28"
+            />
+          ) : (
+            <span>{habit}</span>
+          )}
 
-            {habits.map((habit) => (
-              <div
-                key={habit}
-                className="grid grid-cols-[160px_repeat(31,32px)] gap-2 mb-2"
-              >
-                <div className="flex items-center gap-2">
-                  {editingHabit === habit ? (
-                    <input
-                      autoFocus
-                      defaultValue={habit}
-                      onBlur={(e) =>
-                        renameHabit(habit, e.target.value)
-                      }
-                      onKeyDown={(e) =>
-                        e.key === "Enter" &&
-                        renameHabit(
-                          habit,
-                          (e.target as HTMLInputElement).value
-                        )
-                      }
-                      className="bg-transparent border-b outline-none w-28"
-                    />
-                  ) : (
-                    <span>{habit}</span>
-                  )}
+          <Pencil size={14} onClick={() => setEditingHabit(habit)} />
+          <Trash2 size={14} onClick={() => deleteHabit(habit)} />
+        </div>
 
-                  <Pencil size={14} onClick={() => setEditingHabit(habit)} />
-                  <Trash2 size={14} onClick={() => deleteHabit(habit)} />
-                </div>
+        {days.map((d) => {
+          const done = completed[habit]?.has(d.day);
+          return (
+            <div
+              key={d.day}
+              onClick={() => toggleHabit(habit, d.day)}
+              className={`h-7 rounded-md border flex items-center justify-center cursor-pointer ${
+                done ? theme.gridFilled : theme.gridEmpty
+              }`}
+            >
+              {done && <Check size={14} />}
+            </div>
+          );
+        })}
+      </div>
+    ))}
+  </div>
+</div>
 
-                {days.map((d) => {
-                  const done = completed[habit]?.has(d.day);
-                  return (
-                    <div
-                      key={d.day}
-                      onClick={() => toggleHabit(habit, d.day)}
-                      className={`h-7 rounded-md border flex items-center justify-center cursor-pointer ${
-                        done ? theme.gridFilled : theme.gridEmpty
-                      }`}
-                    >
-                      {done && <Check size={14} />}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
 
             {/* ADD HABIT BUTTON */}
             <button
