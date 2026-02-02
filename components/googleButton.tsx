@@ -1,30 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { Loader2 } from "lucide-react";
+import { signInWithGoogle } from "@/lib/googleAuth";
 
 export default function GoogleButton() {
   const [loading, setLoading] = useState(false);
 
-  async function handleGoogleLogin() {
-    if (loading) return; // prevent double click
+  const handleGoogleLogin = async () => {
+    if (loading) return;
 
     try {
       setLoading(true);
 
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const firebaseToken = await result.user.getIdToken();
+      // 1️⃣ Firebase auth (popup)
+      const firebaseToken = await signInWithGoogle();
 
+      // 2️⃣ Backend auth
       const res = await fetch(
         "https://fastapi-task-manager-w8k2.onrender.com/auth/google",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ firebase_token: firebaseToken }),
         }
       );
@@ -35,17 +32,18 @@ export default function GoogleButton() {
         throw new Error(data.detail || "Google login failed");
       }
 
+      // 3️⃣ Store tokens
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("refresh_token", data.refresh_token);
 
+      // 4️⃣ Redirect
       window.location.href = "/dashboard";
     } catch (err) {
       console.error("Google auth error:", err);
       alert("Google login failed");
-    } finally {
-      setLoading(false);
+      setLoading(false); // only reset on error
     }
-  }
+  };
 
   return (
     <button
