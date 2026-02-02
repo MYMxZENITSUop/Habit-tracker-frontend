@@ -5,6 +5,10 @@ import { Check, Pencil, Trash2, Plus, Palette } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { THEMES } from "@/lib/themes";
 import { apiFetch } from "@/lib/api";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { LogOut } from "lucide-react";
+
 
 const INITIAL_HABITS = ["Workout", "Reading", "Coding", "Meditation", "Journaling"];
 const SLEEP_LEVELS = [9, 8, 7, 6, 5];
@@ -45,6 +49,18 @@ export default function DashboardPage() {
         setHabits(INITIAL_HABITS);
       });
   }, []);
+
+  const handleLogout = async () => {
+  try {
+    await signOut(auth);
+  } catch (err) {
+    console.error("Firebase logout error:", err);
+  } finally {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    window.location.href = "/login";
+  }
+};
 
   // ✅ MONTH LOGIC
   function prevMonth() {
@@ -137,39 +153,49 @@ export default function DashboardPage() {
     {/* TOP BAR */}
 <div className="mb-6">
   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <h1
-      className={`text-2xl sm:text-3xl font-bold ${theme.primary}`}
-    >
+    <h1 className={`text-2xl sm:text-3xl font-bold ${theme.primary}`}>
       Habit Tracker
     </h1>
 
-    <div className="relative sm:absolute sm:left-1/2 sm:-translate-x-1/2">
-      <button
-        onClick={() => setThemeOpen((v) => !v)}
-        className={`flex items-center gap-2 px-4 py-2 rounded-full border ${theme.secondary} ${theme.text}`}
-      >
-        <Palette size={16} />
-        Themes
-      </button>
-
-      {themeOpen && (
-        <div
-          className={`absolute top-full mt-2 w-56 rounded-lg border shadow-lg z-50 ${theme.card} ${theme.text}`}
+    <div className="flex items-center gap-3">
+      {/* THEMES BUTTON (unchanged) */}
+      <div className="relative sm:absolute sm:left-1/2 sm:-translate-x-1/2">
+        <button
+          onClick={() => setThemeOpen((v) => !v)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full border ${theme.secondary} ${theme.text}`}
         >
-          {THEMES.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => {
-                setThemeId(t.id);
-                setThemeOpen(false);
-              }}
-              className={`w-full text-left px-4 py-2 hover:${theme.secondary}`}
-            >
-              {t.name}
-            </button>
-          ))}
-        </div>
-      )}
+          <Palette size={16} />
+          Themes
+        </button>
+
+        {themeOpen && (
+          <div
+            className={`absolute top-full mt-2 w-56 rounded-lg border shadow-lg z-50 ${theme.card} ${theme.text}`}
+          >
+            {THEMES.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => {
+                  setThemeId(t.id);
+                  setThemeOpen(false);
+                }}
+                className={`w-full text-left px-4 py-2 hover:${theme.secondary}`}
+              >
+                {t.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* LOGOUT BUTTON */}
+      <button
+        onClick={handleLogout}
+        className="flex items-center gap-1 px-3 py-2 rounded-full border text-sm hover:bg-red-500/10 text-red-400"
+      >
+        <LogOut size={14} />
+        Logout
+      </button>
     </div>
   </div>
 </div>
@@ -235,14 +261,26 @@ export default function DashboardPage() {
           <div className="overflow-x-auto pb-4">
             <div className="min-w-[1200px]">
               {/* DAYS HEADER */}
-              <div className="grid grid-cols-[160px_repeat(31,32px)] gap-2 text-xs mb-2">
-                <div />
-                {days.map((d) => (
-                  <div key={d.day} className={`text-center ${theme.mutedText}`}>
-                    {d.label}
-                  </div>
-                ))}
-              </div>
+              <div
+  className={`
+    grid grid-cols-[160px_repeat(31,32px)] gap-2 text-xs mb-2
+    sticky top-0 z-20
+    ${theme.card}
+  `}
+>
+  <div
+    className={`sticky left-0 z-30 ${theme.card}`}
+  />
+  {days.map((d) => (
+    <div
+      key={d.day}
+      className={`text-center ${theme.mutedText}`}
+    >
+      {d.label}
+    </div>
+  ))}
+</div>
+
 
               {/* HABIT ROWS */}
               {habits.map((habit) => (
@@ -250,30 +288,35 @@ export default function DashboardPage() {
                   key={habit}
                   className="grid grid-cols-[160px_repeat(31,32px)] gap-2 mb-2"
                 >
-                  <div className="flex items-center gap-2">
-                    {editingHabit === habit ? (
-                      <input
-                        autoFocus
-                        defaultValue={habit}
-                        onBlur={(e) =>
-                          renameHabit(habit, e.target.value)
-                        }
-                        onKeyDown={(e) =>
-                          e.key === "Enter" &&
-                          renameHabit(
-                            habit,
-                            (e.target as HTMLInputElement).value
-                          )
-                        }
-                        className="bg-transparent border-b outline-none w-28"
-                      />
-                    ) : (
-                      <span>{habit}</span>
-                    )}
+                  <div
+  className={`
+    flex items-center gap-2
+    sticky left-0 z-10
+    ${theme.card}
+    pr-2
+  `}
+>
+  {editingHabit === habit ? (
+    <input
+      autoFocus
+      defaultValue={habit}
+      onBlur={(e) => renameHabit(habit, e.target.value)}
+      onKeyDown={(e) =>
+        e.key === "Enter" &&
+        renameHabit(
+          habit,
+          (e.target as HTMLInputElement).value
+        )
+      }
+      className="bg-transparent border-b outline-none w-28"
+    />
+  ) : (
+    <span>{habit}</span>
+  )}
 
-                    <Pencil size={14} onClick={() => setEditingHabit(habit)} />
-                    <Trash2 size={14} onClick={() => deleteHabit(habit)} />
-                  </div>
+  <Pencil size={14} onClick={() => setEditingHabit(habit)} />
+  <Trash2 size={14} onClick={() => deleteHabit(habit)} />
+</div>
 
                   {days.map((d) => {
                     const done = completed[habit]?.has(d.day);
