@@ -19,7 +19,7 @@ export const THEMES: Theme[] = [
   {
     id: "dark",
     name: "Dark (Default)",
-    bg: "bg-black",
+    bg: "bg-gradient-to-br from-[#0b132b]/90 to-[#1c2541]/90",
     card: "bg-slate-900",
     text: "text-white",
     mutedText: "text-white/70",

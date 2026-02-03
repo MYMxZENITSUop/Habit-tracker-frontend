@@ -12,7 +12,7 @@ import { LogOut } from "lucide-react";
 
 const INITIAL_HABITS = ["Workout", "Reading", "Coding", "Meditation", "Journaling"];
 const SLEEP_LEVELS = [9, 8, 7, 6, 5];
-const MAX_BAR_HEIGHT = 102;
+const MAX_BAR_HEIGHT = 112;
 
 function ordinal(n: number) {
   if (n % 10 === 1 && n !== 11) return `${n}st`;
@@ -149,56 +149,98 @@ export default function DashboardPage() {
   }
 
   return (
-  <div className={`min-h-screen p-6 ${theme.bg} ${theme.text}`}>
-    {/* TOP BAR */}
-<div className="mb-6">
-  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <h1 className={`text-2xl sm:text-3xl font-bold ${theme.primary}`}>
-      Habit Tracker
-    </h1>
+    <div className={`relative min-h-screen p-6 ${theme.bg} ${theme.text}`}>
+  
+  {/* 🌌 DARK THEME BACKGROUND EFFECT (ONLY FOR DARK) */}
+  {themeId === "dark" && (
+  <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+    
+    {/* 🌑 Base vignette for depth */}
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.0),rgba(0,0,0,0.55))]" />
 
-    <div className="flex items-center gap-3">
-      {/* THEMES BUTTON (unchanged) */}
-      <div className="relative sm:absolute sm:left-1/2 sm:-translate-x-1/2">
-        <button
-          onClick={() => setThemeOpen((v) => !v)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full border ${theme.secondary} ${theme.text}`}
-        >
-          <Palette size={16} />
-          Themes
-        </button>
+    {/* 🌿 Top-left emerald glow */}
+    <div className="absolute -top-40 -left-40 h-[620px] w-[620px] 
+      bg-[radial-gradient(circle,rgba(16,185,129,0.35),transparent_65%)]
+      animate-[pulse_12s_ease-in-out_infinite]" />
 
-        {themeOpen && (
-          <div
-            className={`absolute top-full mt-2 w-56 rounded-lg border shadow-lg z-50 ${theme.card} ${theme.text}`}
-          >
-            {THEMES.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => {
-                  setThemeId(t.id);
-                  setThemeOpen(false);
-                }}
-                className={`w-full text-left px-4 py-2 hover:${theme.secondary}`}
-              >
-                {t.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+    {/* 🌿 Top-right soft teal */}
+    <div className="absolute -top-48 -right-48 h-[680px] w-[680px]
+      bg-[radial-gradient(circle,rgba(45,212,191,0.18),transparent_70%)]" />
 
-      {/* LOGOUT BUTTON */}
-      <button
-        onClick={handleLogout}
-        className="flex items-center gap-1 px-3 py-2 rounded-full border text-sm hover:bg-red-500/10 text-red-400"
-      >
-        <LogOut size={14} />
-        Logout
-      </button>
-    </div>
+    {/* 🌿 Bottom-left deep emerald */}
+    <div className="absolute -bottom-56 -left-56 h-[760px] w-[760px]
+      bg-[radial-gradient(circle,rgba(16,185,129,0.22),transparent_72%)]" />
+
+    {/* 🌿 Bottom-right faint balance */}
+    <div className="absolute -bottom-40 -right-40 h-[600px] w-[600px]
+      bg-[radial-gradient(circle,rgba(16,185,129,0.15),transparent_70%)]" />
+
+    {/* 🧊 Subtle diagonal depth wash */}
+    <div className="absolute inset-0 
+      bg-gradient-to-tr from-emerald-500/10 via-transparent to-transparent 
+      rotate-6 scale-125" />
+
+    {/* 🎞️ Ultra-fine noise (prevents flat look) */}
+    <div
+      className="absolute inset-0 opacity-[0.035]"
+      style={{
+        backgroundImage:
+          "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"120\" height=\"120\"><filter id=\"n\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" stitchTiles=\"stitch\"/></filter><rect width=\"120\" height=\"120\" filter=\"url(%23n)\"/></svg>')",
+      }}
+    />
   </div>
-</div>
+)}
+  {/* CONTENT LAYER */}
+  <div className="relative z-10">
+
+      {/* TOP BAR */}
+      <div className="mb-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className={`text-2xl sm:text-3xl font-bold ${theme.primary}`}>
+            HabitFlow
+          </h1>
+
+          <div className="flex items-center gap-3">
+            {/* ✅ THEMES BUTTON — FIXED ONLY */}
+            <div className="relative sm:absolute sm:left-1/2 sm:-translate-x-1/2 z-[100]">
+              <button
+                onClick={() => setThemeOpen((v) => !v)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border ${theme.secondary} ${theme.text}`}
+              >
+                <Palette size={16} />
+                Themes
+              </button>
+
+              {themeOpen && (
+                <div
+                  className={`absolute top-full mt-2 w-56 rounded-lg border shadow-lg z-[100] ${theme.card} ${theme.text}`}
+                >
+                  {THEMES.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => {
+                        setThemeId(t.id);
+                        setThemeOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 hover:${theme.secondary}`}
+                    >
+                      {t.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 px-3 py-2 rounded-full border text-sm hover:bg-red-500/10 text-red-400"
+            >
+              <LogOut size={14} />
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
 
     <Card className={`${theme.card} border border-black/20`}>
       <CardContent className={`p-6 space-y-8 ${theme.text}`}>
@@ -433,6 +475,7 @@ export default function DashboardPage() {
         </div>
       </CardContent>
     </Card>
+  </div>
   </div>
 );
 }
