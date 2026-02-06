@@ -9,7 +9,6 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { LogOut } from "lucide-react";
 
-
 const INITIAL_HABITS = ["Workout", "Reading", "Coding", "Meditation", "Journaling"];
 const SLEEP_LEVELS = [9, 8, 7, 6, 5];
 const MAX_BAR_HEIGHT = 112;
@@ -26,7 +25,9 @@ export default function DashboardPage() {
   const [themeOpen, setThemeOpen] = useState(false);
   const theme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
 
-  const [habits, setHabits] = useState<string[]>(INITIAL_HABITS);
+  // ✅ Start empty → prevents flicker
+  const [habits, setHabits] = useState<string[]>([]);
+  const [habitIds, setHabitIds] = useState<Record<string, number>>({});
   const [completed, setCompleted] = useState<Record<string, Set<number>>>({});
   const [sleep, setSleep] = useState<Record<number, number>>({});
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -38,31 +39,62 @@ export default function DashboardPage() {
   const [addingHabit, setAddingHabit] = useState(false);
   const [habitDraft, setHabitDraft] = useState("");
 
+  // =========================
+  // LOAD HABITS + SEED + LOAD LOGS
+  // =========================
   useEffect(() => {
-    apiFetch("/habits")
-      .then((data) => {
-        if (data?.length) {
-          setHabits(data.map((h: any) => h.name));
+    async function loadAll() {
+      try {
+        let data = await apiFetch("/habits");
+
+        // ✅ New user → seed initial habits
+        if (!data || data.length === 0) {
+          for (const h of INITIAL_HABITS) {
+            await apiFetch("/habits", {
+              method: "POST",
+              body: JSON.stringify({ name: h }),
+            });
+          }
+          data = await apiFetch("/habits");
         }
-      })
-      .catch(() => {
-        setHabits(INITIAL_HABITS);
-      });
-  }, []);
+
+        const names = data.map((x: any) => x.name);
+        const idMap: Record<string, number> = {};
+        data.forEach((x: any) => (idMap[x.name] = x.id));
+
+        setHabits(names);
+        setHabitIds(idMap);
+
+        // ✅ Load logs (ticks)
+        const logs = await apiFetch(
+          `/habits/logs?month=${currentMonth.getMonth() + 1}&year=${currentMonth.getFullYear()}`
+        );
+
+        const map: Record<string, Set<number>> = {};
+        logs.forEach((l: any) => {
+          if (!map[l.habit_name]) map[l.habit_name] = new Set();
+          map[l.habit_name].add(l.day);
+        });
+
+        setCompleted(map);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    loadAll();
+  }, [currentMonth]);
 
   const handleLogout = async () => {
-  try {
-    await signOut(auth);
-  } catch (err) {
-    console.error("Firebase logout error:", err);
-  } finally {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    window.location.href = "/login";
-  }
-};
+    try {
+      await signOut(auth);
+    } finally {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      window.location.href = "/login";
+    }
+  };
 
-  // ✅ MONTH LOGIC
   function prevMonth() {
     setCurrentMonth(
       (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
@@ -75,8 +107,7 @@ export default function DashboardPage() {
       currentMonth.getMonth() + 1,
       1
     );
-
-    if (next > new Date()) return; // block future
+    if (next > new Date()) return;
     setCurrentMonth(next);
   }
 
@@ -102,35 +133,68 @@ export default function DashboardPage() {
     });
   }, [year, monthIndex, daysInMonth]);
 
-  function toggleHabit(habit: string, day: number) {
+  // =========================
+  // TOGGLE → DB + UI
+  // =========================
+  async function toggleHabit(habit: string, day: number) {
+    const habitId = habitIds[habit];
+    if (!habitId) return;
+
     setCompleted((prev) => {
       const set = new Set(prev[habit] || []);
       set.has(day) ? set.delete(day) : set.add(day);
       return { ...prev, [habit]: set };
     });
+
+    try {
+      await apiFetch(`/habits/${habitId}/toggle`, {
+        method: "POST",
+        body: JSON.stringify({
+          day: day,
+          month: currentMonth.getMonth() + 1,
+          year: currentMonth.getFullYear(),
+        }),
+      });
+    } catch (e) {
+      console.error("Toggle failed:", e);
+    }
   }
 
   function setSleepHours(day: number, hrs: number) {
     setSleep((prev) => ({ ...prev, [day]: hrs }));
   }
 
-  function saveNewHabit() {
+  // =========================
+  // CREATE HABIT
+  // =========================
+  async function saveNewHabit() {
     if (!habitDraft.trim()) {
       setAddingHabit(false);
       return;
     }
-    setHabits((h) => [...h, habitDraft.trim()]);
+
+    const created = await apiFetch("/habits", {
+      method: "POST",
+      body: JSON.stringify({ name: habitDraft.trim() }),
+    });
+
+    setHabits((h) => [...h, created.name]);
+    setHabitIds((p) => ({ ...p, [created.name]: created.id }));
+
     setHabitDraft("");
     setAddingHabit(false);
   }
 
-  function deleteHabit(habit: string) {
+  // =========================
+  // DELETE HABIT
+  // =========================
+  async function deleteHabit(habit: string) {
+    const id = habitIds[habit];
+    if (!id) return;
+
+    await apiFetch(`/habits/${id}`, { method: "DELETE" });
+
     setHabits((h) => h.filter((x) => x !== habit));
-    setCompleted((prev) => {
-      const copy = { ...prev };
-      delete copy[habit];
-      return copy;
-    });
   }
 
   function renameHabit(oldName: string, newName: string) {
@@ -139,15 +203,9 @@ export default function DashboardPage() {
       return;
     }
     setHabits((h) => h.map((x) => (x === oldName ? newName : x)));
-    setCompleted((prev) => {
-      const copy = { ...prev };
-      copy[newName] = copy[oldName] || new Set();
-      delete copy[oldName];
-      return copy;
-    });
     setEditingHabit(null);
   }
-
+  
   return (
     <div className={`relative min-h-screen p-6 ${theme.bg} ${theme.text}`}>
   
@@ -325,9 +383,9 @@ export default function DashboardPage() {
 
 
               {/* HABIT ROWS */}
-              {habits.map((habit) => (
+              {habits.map((habit,index) => (
                 <div
-                  key={habit}
+                  key={habit + "-" + index}
                   className="grid grid-cols-[160px_repeat(31,32px)] gap-2 mb-2"
                 >
                   <div
